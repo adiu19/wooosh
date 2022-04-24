@@ -43,7 +43,6 @@ __kernel void kMeansCentroidUpdate(__global float *d_datapoints, __global int *d
     int TPB = 32;
 	//get idx of thread at the block level
 	const int s_idx = get_local_id(0);
-    printf("%d-- \n", s_idx);
 
 	//put the datapoints and corresponding cluster assignments in shared memory so that they can be summed by thread 0 later
 	__local float s_datapoints[32];

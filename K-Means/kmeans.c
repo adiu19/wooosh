@@ -152,9 +152,9 @@ int main(void) {
         }
         clFinish(command_queue);
 
-		// for(int i =0; i < K; ++i){
-		// 	printf("Iteration %d: centroid %d: %f\n",cur_iter,i,h_centroids[i]);
-		// }
+		for(int i =0; i < K; ++i){
+			printf("Iteration %d: centroid %d: %f\n",cur_iter,i,h_centroids[i]);
+		}
 
         float zero_float = 0.0;
         int zero_int = 0;

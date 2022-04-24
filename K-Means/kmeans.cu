@@ -50,7 +50,6 @@ __global__ void kMeansCentroidUpdate(float *d_datapoints, int *d_clust_assn, flo
 
 	//get idx of thread at the block level
 	const int s_idx = threadIdx.x;
-    printf("%d- s - \n", s_idx);
 
 	//put the datapoints and corresponding cluster assignments in shared memory so that they can be summed by thread 0 later
 	__shared__ float s_datapoints[TPB];
@@ -152,9 +151,9 @@ int main()
 		//copy new centroids back to host 
 		cudaMemcpy(h_centroids,d_centroids,K*sizeof(float),cudaMemcpyDeviceToHost);
 
-		// for(int i =0; i < K; ++i){
-		// 	printf("Iteration %d: centroid %d: %f\n",cur_iter,i,h_centroids[i]);
-		// }
+		for(int i =0; i < K; ++i){
+			printf("Iteration %d: centroid %d: %f\n",cur_iter,i,h_centroids[i]);
+		}
 
 		//reset centroids and cluster sizes (will be updated in the next kernel)
 		cudaMemset(d_centroids,0.0,K*sizeof(float));
