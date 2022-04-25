@@ -10,8 +10,8 @@ using namespace std;
 #define MAX_SOURCE_SIZE (0x10000000)
 
 int main(){
-	unsigned long n = 256 * 256 * 10;
-	unsigned long m = 20000;
+	unsigned long n = 256 * 256 * 256;
+	unsigned long m = 65536;
 	unsigned long *h_count;
 	unsigned long *d_count;
 
