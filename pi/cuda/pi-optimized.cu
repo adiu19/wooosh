@@ -4,15 +4,14 @@
 #include <cuda.h>
 #include <curand_kernel.h>
 
-using std::cout;
-using std::endl;
+using namespace std;
 
 typedef unsigned long long Count;
-typedef std::numeric_limits<double> DblLim;
+typedef numeric_limits<double> DblLim;
 
 const Count TPB = 32;
-const Count NBLOCKS = 640;
-const Count ITERATIONS = 1000000;
+const Count NBLOCKS = 65536;
+const Count m = 1000000;
 
 __global__ void picount(Count *totals) {
 
@@ -25,35 +24,40 @@ __global__ void picount(Count *totals) {
 
 	counter[threadIdx.x] = 0;
 
-	for (int i = 0; i < ITERATIONS; i++) {
+	for (int i = 0; i < m; i++) {
 		float x = curand_uniform(&rng);
 		float y = curand_uniform(&rng);
 		counter[threadIdx.x] += 1 - int(x * x + y * y);
 	}
 
-	if (threadIdx.x == 0) {
-		totals[blockIdx.x] = 0;
-		for (int i = 0; i < TPB; i++) {
-			totals[blockIdx.x] += counter[i];
+    int i = blockDim.x/2;
+	while(i != 0){
+		if(threadIdx.x < i){
+			counter[threadIdx.x] += counter[threadIdx.x + i];
 		}
+
+		i /= 2;
+		__syncthreads();
+	}
+
+	if (threadIdx.x == 0) {
+        atomicAdd(totals, counter[0]);
 	}
 }
 
 int main(int argc, char **argv) {
 	Count *hOut, *dOut;
-	hOut = new Count[NBLOCKS];
-	cudaMalloc(&dOut, sizeof(Count) * NBLOCKS);
+	hOut = new Count[1];
+	cudaMalloc(&dOut, sizeof(Count) * 1);
 
 	picount<<<NBLOCKS, TPB>>>(dOut);
 
-	cudaMemcpy(hOut, dOut, sizeof(Count) * NBLOCKS, cudaMemcpyDeviceToHost);
+	cudaMemcpy(hOut, dOut, sizeof(Count) * 1, cudaMemcpyDeviceToHost);
 	cudaFree(dOut);
 
-	Count total = 0;
-	for (int i = 0; i < NBLOCKS; i++) {
-		total += hOut[i];
-	}
-	Count tests = NBLOCKS * ITERATIONS * TPB;
+	Count total = hOut[0];
+
+	Count tests = NBLOCKS * m * TPB;
 	cout << "Approximated PI using " << tests << " random tests\n";
 
 	cout.precision(DblLim::max_digits10);
