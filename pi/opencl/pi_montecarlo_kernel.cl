@@ -5,7 +5,7 @@ __kernel void monte_carlo_pi_kernel(__global ulong *g_count, ulong n, ulong m) {
     ulong index = get_global_id(0);
     if (index < n) {
 
-        __local ulong cache[256];
+        __local ulong cache[32];
         cache[get_local_id(0)] = 0;
 
         barrier(CLK_LOCAL_MEM_FENCE);

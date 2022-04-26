@@ -6,12 +6,16 @@
 
 using namespace std;
 
+int TPB = 32;
+int NBLOCKS = 65536;
+typedef numeric_limits<double> DblLim;
 
 #define MAX_SOURCE_SIZE (0x10000000)
 
 int main(){
-	unsigned long n = 256 * 256 * 256;
-	unsigned long m = 65536;
+    clock_t start, end;
+	unsigned long n = TPB * NBLOCKS;
+	unsigned long m = 10000;
 	unsigned long *h_count;
 	unsigned long *d_count;
 
@@ -49,20 +53,19 @@ int main(){
     const char *tmp = header_path.c_str();
     ret = clBuildProgram(program, 1, &device_id, tmp, NULL, NULL);
 
-    printf("program built %d \n", ret);
-
     if (ret == CL_BUILD_PROGRAM_FAILURE) {
         size_t log_size;
         clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
         char *log = (char *) malloc(log_size);
         clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
         printf("%s\n", log);
+        exit(1);
     }
 
     cl_device_type dev_type;
     clGetDeviceInfo(device_id, CL_DEVICE_TYPE, sizeof(dev_type), &dev_type, NULL);
     if (dev_type == CL_DEVICE_TYPE_GPU) {
-        printf("usage of GPU confirmed \n");
+     //   printf("usage of GPU confirmed \n");
     }
 
     cl_kernel monte_carlo_pi_kernel = clCreateKernel(program, "monte_carlo_pi_kernel" , &err);
@@ -70,8 +73,8 @@ int main(){
     size_t global_size[1];
     size_t local_size[1];
 
-    global_size[0] = n;
-    local_size[0] = 256;
+    global_size[0] = TPB * NBLOCKS;
+    local_size[0] = TPB;
 
     unsigned long zero_int = 0;
 
@@ -81,24 +84,24 @@ int main(){
 
     g_count = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned long), NULL, &err);
     err = clEnqueueFillBuffer(command_queue, g_count, &zero_int, sizeof(unsigned long), 0, sizeof(unsigned long), 0, NULL, NULL);
-    printf("g_count created and enqueued %d \n", err);
-
-    printf("g_state created and enqueued %d \n", err);
-
 
     err = clSetKernelArg(monte_carlo_pi_kernel, 0, sizeof(cl_mem), &g_count);
     err |= clSetKernelArg(monte_carlo_pi_kernel, 1, sizeof(unsigned long), &n);
     err |= clSetKernelArg(monte_carlo_pi_kernel, 2, sizeof(unsigned long), &m);
 
+    start = clock();
     err = clEnqueueNDRangeKernel(command_queue, monte_carlo_pi_kernel, 1, NULL, global_size, local_size, 0, NULL, NULL);
     clFinish(command_queue);
-    printf("main kernel done %d \n", err);
     err = clEnqueueReadBuffer(command_queue, g_count, CL_TRUE, 0, sizeof(unsigned long), h_count, 0, NULL, NULL);
-    printf("g_count read into host %d \n", err);
 
-	pi = *h_count*4.0/(n*m);
-	cout<<" approximate pi calculated on GPU using OpenCL is: "<<pi<<endl;
-    
+    end = clock();
+    unsigned long long tests = NBLOCKS * m * TPB;
+	cout << "[OpenCL ]Approximated PI using " << tests << " random tests\n";
+
+	cout.precision(DblLim::max_digits10);
+	cout << "PI ~= " << 4.0 * (double)*h_count/(double)tests << endl;
+    cout << "Kernel Execution took " << (double)(end - start)/CLOCKS_PER_SEC << endl;
+
     clFlush(command_queue);
     clReleaseMemObject(g_count);
 
@@ -110,6 +113,6 @@ int main(){
     clReleaseContext(context);
 
     free(h_count);
-
+   
 }
 

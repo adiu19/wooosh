@@ -11,9 +11,9 @@ typedef numeric_limits<double> DblLim;
 
 const Count TPB = 32;
 const Count NBLOCKS = 65536;
-const Count m = 1000000;
+const Count m = 10000;
 
-__global__ void picount(Count *totals) {
+__global__ void monte_carlo_pi(Count *totals) {
 
 	__shared__ Count counter[TPB];
 
@@ -46,22 +46,26 @@ __global__ void picount(Count *totals) {
 }
 
 int main(int argc, char **argv) {
+	clock_t start;
+	clock_t end;
 	Count *hOut, *dOut;
 	hOut = new Count[1];
 	cudaMalloc(&dOut, sizeof(Count) * 1);
-
-	picount<<<NBLOCKS, TPB>>>(dOut);
-
+	start = clock();
+	monte_carlo_pi<<<NBLOCKS, TPB>>>(dOut);
+	cudaDeviceSynchronize();
+	end = clock();
 	cudaMemcpy(hOut, dOut, sizeof(Count) * 1, cudaMemcpyDeviceToHost);
 	cudaFree(dOut);
 
 	Count total = hOut[0];
 
 	Count tests = NBLOCKS * m * TPB;
-	cout << "Approximated PI using " << tests << " random tests\n";
+	cout << "[CUDA] Approximated PI using " << tests << " random tests\n";
 
 	cout.precision(DblLim::max_digits10);
 	cout << "PI ~= " << 4.0 * (double)total/(double)tests << endl;
+	cout << "Kernel Execution took " << (double)(end - start)/CLOCKS_PER_SEC << endl;
 
 	return 0;
 }

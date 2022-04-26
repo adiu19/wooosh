@@ -8,6 +8,9 @@
 
 using namespace std;
 
+int TPB = 32;
+double kernel_execution_time = 0;
+clock_t k_start, k_end;
 
 void get_adj_matrix(float* graph, int n, float d, FILE *inputFilePtr){
 
@@ -16,12 +19,10 @@ void get_adj_matrix(float* graph, int n, float d, FILE *inputFilePtr){
         return ;
     }
 
-    int num, m, indexing;
+    int m, indexing;
     
-    fscanf(inputFilePtr, "%d", &num);
     fscanf(inputFilePtr, "%d", &m);
     fscanf(inputFilePtr, "%d", &indexing);
-
     
     for(int i = 0; i< n ; i++){
     
@@ -124,20 +125,19 @@ void power_method(float *graph, float *r, int n, int nblocks, int BLOCKSIZE, int
 
     float* gpu_r;
     cudaMalloc(&gpu_r, sizeof(float)*n);
-    //cudaMemcpy(gpu_r, r, sizeof(float)*n, cudaMemcpyHostToDevice);
 
     float* gpu_r_last;
     cudaMalloc(&gpu_r_last, sizeof(float)*n);
-    //cudaMemcpy(gpu_r_last, r_last, sizeof(float)*n, cudaMemcpyHostToDevice);
 
-
-
+    k_start = clock();
     initialize_rank<<<nblocks, BLOCKSIZE>>>(gpu_r, n);
     cudaDeviceSynchronize();
+    k_end = clock();
 
-
+    kernel_execution_time += (double)(k_end - k_start)/CLOCKS_PER_SEC;
 
     while(max_iter--){
+        k_start = clock();
 
         store_rank<<<nblocks, BLOCKSIZE>>>(gpu_r, gpu_r_last, n);
         cudaDeviceSynchronize();
@@ -148,34 +148,30 @@ void power_method(float *graph, float *r, int n, int nblocks, int BLOCKSIZE, int
         rank_diff<<<nblocks, BLOCKSIZE>>>(gpu_r, gpu_r_last, n);
         cudaDeviceSynchronize();
 
+        k_end = clock();
+
+        kernel_execution_time += (double)(k_end - k_start)/CLOCKS_PER_SEC;
+
         cudaMemcpy(r_last, gpu_r_last, n* sizeof(float), cudaMemcpyDeviceToHost);
     }
     cudaMemcpy(r, gpu_r, n* sizeof(float), cudaMemcpyDeviceToHost);
     return;
 }
 
-void top_nodes(float* r, int n, int nblocks, int BLOCKSIZE, int count = 10){
+void top_nodes(float *r, int n, int count = 10){
 
-    pair<float, int> *r_nodes = (pair<float, int> *) malloc ( n * sizeof (pair<float, int>) );
-    pair<float, int> *gpu_r_nodes;
+    priority_queue< pair<float, int> > pq;
 
-    cudaMalloc(&gpu_r_nodes, n * sizeof (pair<float, int>));
-
-    float* gpu_r;
-    cudaMalloc(&gpu_r, sizeof(float)*n);
-    cudaMemcpy(gpu_r, r, sizeof(float)*n, cudaMemcpyHostToDevice);
-
-    init_pair_array<<<nblocks, BLOCKSIZE>>>(gpu_r_nodes, gpu_r, n);
-
-    cudaMemcpy(r_nodes, gpu_r_nodes, n * sizeof (pair<float, int>), cudaMemcpyDeviceToHost);
-
-    thrust::sort(thrust::host, r_nodes, r_nodes + n);
-
+    for(int i = 0; i< n; ++i){
+        pq.push(make_pair(r[i], i+ 1));
+    }
     int rank =1;
     while(rank <= count){
-        printf("Rank %d Node is %d\n", rank, r_nodes[n - rank].second);
+        printf("Rank %d Node is %d\n", rank, pq.top().second);
         rank++;
+        pq.pop();
     }
+
 }
 
 int main(int argc, char** argv){
@@ -183,37 +179,39 @@ int main(int argc, char** argv){
     clock_t start, end;
 
     FILE *inputFilePtr;
-
     char * inputfile = argv[1];
 
-    int n = atoi(argv[2]); 
-    char * bsize = argv[3];
-    int BLOCKSIZE = atoi(bsize);
-
+    int n; 
     inputFilePtr = fopen(inputfile, "r");
 
-    int nblocks = ceil(float(n) / BLOCKSIZE);
+    fscanf(inputFilePtr, "%d", &n);
+
+    int nblocks = ceil(float(n) / TPB);
 
     float* graph = (float*)malloc(n*n*sizeof(float));
     float* r = (float*) malloc(n * sizeof(float));
-    printf("malloc done \n");
     float d = 0.85;
     get_adj_matrix(graph, n, d, inputFilePtr);
-    printf("got adj matrix \n");
     float* gpu_graph;
-    cudaMalloc(&gpu_graph, sizeof(float)*n*n);
-    cudaMemcpy(gpu_graph, graph, sizeof(float)*n*n, cudaMemcpyHostToDevice);
-    
+
     start = clock();
 
-    manage_adj_matrix<<<nblocks, BLOCKSIZE>>>(gpu_graph, n);
+    cudaMalloc(&gpu_graph, sizeof(float)*n*n);
+    cudaMemcpy(gpu_graph, graph, sizeof(float)*n*n, cudaMemcpyHostToDevice);
+
+    k_start = clock();
+    manage_adj_matrix<<<nblocks, TPB>>>(gpu_graph, n);
+    cudaDeviceSynchronize();
+    k_end = clock();
+    kernel_execution_time += (double)(k_end - k_start)/CLOCKS_PER_SEC;
+
     cudaMemcpy(graph, gpu_graph, sizeof(float)*n*n, cudaMemcpyDeviceToHost);
 
-    power_method(graph, r, n, nblocks, BLOCKSIZE);
-    top_nodes(r, n, nblocks, BLOCKSIZE);
+    power_method(graph, r, n, nblocks, TPB);
     cudaDeviceSynchronize();
     end = clock();
 
-    printf("Time taken :%f for parallel implementation with %d nodes.\n", float(end - start)/CLOCKS_PER_SEC, n);
+    top_nodes(r, n);
+    printf("[CUDA] total time : %f, GPU time : %f with %d nodes.\n", double(end - start)/CLOCKS_PER_SEC, kernel_execution_time, n);
     return 0;
 }

@@ -10,9 +10,8 @@ void get_adj_matrix(float** graph, int n, float d, FILE *inputFilePtr ){
         return ;
     }
 
-    int num, m, indexing;
+    int m, indexing;
 
-    fscanf(inputFilePtr, "%d", &num);
     fscanf(inputFilePtr, "%d", &m);
     fscanf(inputFilePtr, "%d", &indexing);
 
@@ -122,7 +121,9 @@ int main(int argc, char** argv){
 
     char * inputfile = argv[1];
     inputFilePtr = fopen(inputfile, "r");
-    int n = atoi(argv[2]); 
+    int n = 0;
+    
+    fscanf(inputFilePtr, "%d", &n); 
 
     float d = 0.85; 
 
@@ -138,6 +139,6 @@ int main(int argc, char** argv){
     top_nodes(r, n);
 
     end = clock();
-    printf("Time taken :%f for sequential implementation with %d nodes.\n", float(end - start)/CLOCKS_PER_SEC, n);
+    printf("[SEQ]Time taken :%f with %d nodes.\n", float(end - start)/CLOCKS_PER_SEC, n);
     return 0;
 }
