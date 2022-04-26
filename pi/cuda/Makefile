@@ -1,8 +1,8 @@
 NVCC= nvcc            
-execname= pr
+execname= picu
 
 $(execname): pi-optimized.cu
-	nvcc -o pr -std=c++11 pi-optimized.cu -lm 
+	nvcc -o $(execname) -std=c++11 pi-optimized.cu -lm 
 
 
 clean:
