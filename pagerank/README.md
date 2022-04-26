@@ -9,7 +9,7 @@ Build Commands (to be run in the individual folders):
     OpenCL : g++ -std=c++11 -o procl pagerank.cpp -I/usr/local/cuda/include/ -I. -lOpenCL
 
 Run Commands  (to be run in the individual folders):
-    CUDA : ./prcu ../data/5000.txt
-    Seq : ./prseq ../data/5000.txt
-    OpenCL : ./procl ../data/5000.txt
+    CUDA : ./prcu ../data/100.txt
+    Seq : ./prseq ../data/100.txt
+    OpenCL : ./procl ../data/100.txt
 
