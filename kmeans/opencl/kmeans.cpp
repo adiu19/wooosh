@@ -266,8 +266,8 @@ int main(void) {
 
 
     // printf("OpenCl Execution time is: %0.3f milliseconds \n",nanoSeconds / 1000000.0);
-    printf("Total time taken by the kMeansClusterAssignment kernel is = %lf\n", gpu_time_kernel_1);
-	printf("Total time taken by the kMeansCentroidUpdate kernel is = %lf\n", gpu_time_kernel_2);
+    // printf("Total time taken by the kMeansClusterAssignment kernel is = %lf\n", gpu_time_kernel_1);
+	// printf("Total time taken by the kMeansCentroidUpdate kernel is = %lf\n", gpu_time_kernel_2);
 
     
     // Clean up

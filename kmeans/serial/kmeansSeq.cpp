@@ -139,8 +139,8 @@ int main()
 
 		cur_iter+=1;
 	}
-	printf("Total time taken by the kMeansClusterAssignment method is = %lf\n", cpu_time_method_1);
-	printf("Total time taken by the kMeansCentroidUpdate method is = %lf\n", cpu_time_method_2);
+	// printf("Total time taken by the kMeansClusterAssignment method is = %lf\n", cpu_time_method_1);
+	// printf("Total time taken by the kMeansCentroidUpdate method is = %lf\n", cpu_time_method_2);
 
 
 

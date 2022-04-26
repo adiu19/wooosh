@@ -172,8 +172,8 @@ int main()
 		cur_iter+=1;
 	}
 
-	printf("Total time taken by the kMeansClusterAssignment kernel is = %lf\n", gpu_time_kernel_1);
-	printf("Total time taken by the kMeansCentroidUpdate kernel is = %lf\n", gpu_time_kernel_2);
+	// printf("Total time taken by the kMeansClusterAssignment kernel is = %lf\n", gpu_time_kernel_1);
+	// printf("Total time taken by the kMeansCentroidUpdate kernel is = %lf\n", gpu_time_kernel_2);
 
 
 
