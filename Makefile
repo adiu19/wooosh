@@ -11,6 +11,9 @@ all:
 	make -C bitonic_sort/serial
 	make -C bitonic_sort/cuda
 	make -C bitonic_sort/opencl
+	make -C kmeans/cuda
+	make -C kmeans/opencl
+	make -C kmeans/serial
 clean:
 	make clean -C pi/cuda
 	make clean -C pi/opencl
@@ -24,3 +27,6 @@ clean:
 	make clean -C bitonic_sort/serial
 	make clean -C bitonic_sort/cuda
 	make clean -C bitonic_sort/opencl
+	make clean -C kmeans/cuda
+	make clean -C kmeans/opencl
+	make clean -C kmeans/serial
