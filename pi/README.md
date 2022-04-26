@@ -1,2 +1,12 @@
-g++ -std=c++11 -o pi_seq pi_seq.cpp -I.
-nvcc -o pi_cuda pi_cuda.cu -I/usr/local/cuda/include/ -lm
+Implementation of Monte Carlo Simulation to estimate PI : Sequential, CUDA, and OpenCL. The number of simulations are embedded in the code.
+
+Build Commands (to be run in the individual folders. not a necessary step since we have provided a make file for each):
+    CUDA : nvcc -o picu pi-optimized.cu -lm
+    Sequential : g++ -std=c++11 -o piseq pi_seq.cpp -I.
+    OpenCL : g++ -std=c++11 -o piocl pi_opencl.cpp -I/usr/local/cuda/include/ -I. -lOpenCL
+
+Run Commands  (to be run in the individual folders):
+    CUDA : ./picu
+    Seq : ./piseq
+    OpenCL : ./piocl
+
