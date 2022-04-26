@@ -13,7 +13,7 @@ typedef numeric_limits<double> DblLim;
 #define MAX_SOURCE_SIZE (0x10000000)
 
 int main(){
-
+    clock_t start, end;
 	unsigned long n = TPB * NBLOCKS;
 	unsigned long m = 10000;
 	unsigned long *h_count;
@@ -89,16 +89,19 @@ int main(){
     err |= clSetKernelArg(monte_carlo_pi_kernel, 1, sizeof(unsigned long), &n);
     err |= clSetKernelArg(monte_carlo_pi_kernel, 2, sizeof(unsigned long), &m);
 
+    start = clock();
     err = clEnqueueNDRangeKernel(command_queue, monte_carlo_pi_kernel, 1, NULL, global_size, local_size, 0, NULL, NULL);
     clFinish(command_queue);
     err = clEnqueueReadBuffer(command_queue, g_count, CL_TRUE, 0, sizeof(unsigned long), h_count, 0, NULL, NULL);
 
+    end = clock();
     unsigned long long tests = NBLOCKS * m * TPB;
-	cout << "Approximated PI using " << tests << " random tests\n";
+	cout << "[OpenCL ]Approximated PI using " << tests << " random tests\n";
 
 	cout.precision(DblLim::max_digits10);
 	cout << "PI ~= " << 4.0 * (double)*h_count/(double)tests << endl;
-    
+    cout << "Kernel Execution took " << (double)(end - start)/CLOCKS_PER_SEC << endl;
+
     clFlush(command_queue);
     clReleaseMemObject(g_count);
 

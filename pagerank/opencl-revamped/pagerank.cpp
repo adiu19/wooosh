@@ -8,6 +8,10 @@
 
 using namespace std;
 
+int TPB = 32;
+double kernel_execution_time = 0;
+
+
 #define MAX_SOURCE_SIZE (0x10000000)
 
 void get_adj_matrix(float* graph, int n, float d, FILE *inputFilePtr){
@@ -17,9 +21,8 @@ void get_adj_matrix(float* graph, int n, float d, FILE *inputFilePtr){
         return ;
     }
 
-    int num, m, indexing;
+    int m, indexing;
     
-    fscanf(inputFilePtr, "%d", &num);
     fscanf(inputFilePtr, "%d", &m);
     fscanf(inputFilePtr, "%d", &indexing);
     
@@ -42,57 +45,6 @@ void get_adj_matrix(float* graph, int n, float d, FILE *inputFilePtr){
     }
 }
 
-
-void manage_adj_matrix_serial(float* graph, int n){
-    for(int j = 0; j < n; ++j){
-        float sum = 0.0;
-
-        for (int i = 0; i< n; ++i){
-            sum += graph[i * n + j];
-        }
-
-        for (int i = 0; i < n; ++i){
-            if (sum != 0.0){
-                graph[i * n + j] /= sum;
-            }
-            else{
-                graph[i * n + j] = (1/(float)n);
-            }
-        }
-    }
-
-}
-
-void initialize_rank_serial(float *r, int n) {
-    for(int i = 0; i< n; ++i){
-        r[i] = (1/(float)n);
-    }
-}
-
-void store_rank_serial(float *r, float *r_last, int n) {
-    for(int i = 0; i< n; ++i){
-        r_last[i] = r[i];
-    }
-}
-
-void matmul_serial(float *graph, float *r, float *r_last, int n) {
-    for(int i = 0; i < n; ++i){
-        float sum = 0.0;
-
-        for (int j = 0; j< n; ++j){
-            sum += r_last[j] * graph[i * n + j];
-        }
-
-        r[i] = sum;
-    }
-}
-
-void rankdiff_serial(float *r, float *r_last, int n) {
-    for(int i = 0; i< n; ++i){
-        r_last[i] -= r[i];
-    }
-}
-
 void top_nodes(float *r, int n, int count = 10){
 
     priority_queue<pair<float, int>> pq;
@@ -111,11 +63,14 @@ void top_nodes(float *r, int n, int count = 10){
 
 int main(int argc, char** argv){
     clock_t start, end;
+    clock_t k_start, k_end;
     FILE *inputFilePtr;
 
     char * inputfile = argv[1];
     inputFilePtr = fopen(inputfile, "r");
-    int n = atoi(argv[2]); 
+    int n;
+    
+    fscanf(inputFilePtr, "%d", &n);
 
     float d = 0.85; //dmaping factor 
 
@@ -180,9 +135,13 @@ int main(int argc, char** argv){
 
     err = clSetKernelArg(manage_adj_matrix, 0, sizeof(cl_mem), &gpu_graph);
     err |= clSetKernelArg(manage_adj_matrix, 1, sizeof(int), &n);
+
+    k_start = clock();
     err = clEnqueueNDRangeKernel(command_queue, manage_adj_matrix, 1, NULL, global_size, NULL, 0, NULL, NULL);
     clFinish(command_queue);
+    k_end = clock();
 
+    kernel_execution_time += (double)(k_end - k_start)/CLOCKS_PER_SEC;
     err = clEnqueueReadBuffer(command_queue, gpu_graph, CL_TRUE, 0, sizeof(cl_float) * n * n, graph, 0, NULL, NULL);
     clFinish(command_queue);
     
@@ -208,8 +167,10 @@ int main(int argc, char** argv){
     err |= clSetKernelArg(rank_diff, 1, sizeof(cl_mem), &gpu_r_last);
     err |= clSetKernelArg(rank_diff, 2, sizeof(int), &n);
 
+    k_start = clock();
     err = clEnqueueNDRangeKernel(command_queue, initialize_rank, 1, NULL, global_size, NULL, 0, NULL, NULL);
     clFinish(command_queue);
+    
 
     int max_iter = 50;
     while(max_iter--){
@@ -223,6 +184,9 @@ int main(int argc, char** argv){
         err = clEnqueueNDRangeKernel(command_queue, rank_diff, 1, NULL, global_size, NULL, 0, NULL, NULL);
         clFinish(command_queue);
     }
+
+    k_end = clock();
+    kernel_execution_time += (double)(k_end - k_start)/CLOCKS_PER_SEC;
 
     err = clEnqueueReadBuffer(command_queue, gpu_r, CL_TRUE, 0, sizeof(float) * n, r, 0, NULL, NULL);
     clFlush(command_queue);
@@ -244,6 +208,6 @@ int main(int argc, char** argv){
     end = clock();
 
     top_nodes(r, n);
-    printf("Time taken :%f for OpenCL implementation with %d nodes.\n", float(end - start)/CLOCKS_PER_SEC, n);
+    printf("[OpenCL] total time : %f , GPU time : %f with %d nodes.\n", double(end - start)/CLOCKS_PER_SEC, kernel_execution_time, n);
     return 0;
 }
