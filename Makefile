@@ -4,7 +4,7 @@ all:
 	make -C pi/seq
 	make -C pagerank/cuda
 	make -C pagerank/seq
-	make -C pagerank/opencl-revamped
+	make -C pagerank/opencl
 	make -C floyd_warshall/serial
 	make -C floyd_warshall/cuda
 	make -C floyd_warshall/opencl
@@ -17,7 +17,7 @@ clean:
 	make clean -C pi/seq
 	make clean -C pagerank/cuda
 	make clean -C pagerank/seq
-	make clean -C pagerank/opencl-revamped
+	make clean -C pagerank/opencl
 	make clean -C floyd_warshall/serial
 	make clean -C floyd_warshall/cuda
 	make clean -C floyd_warshall/opencl
