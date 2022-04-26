@@ -11,15 +11,15 @@ g++ -std=c++11 generate_data.cpp -o generate_data
 
 Serial :
 cd serial/
-g++ -std=c++11 bitonic_sort_serial.cpp -o bsserial
-./bsserial 2048
+g++ -std=c++11 bitonic_sort_serial.cpp -o bsseq
+./bsseq 2048
 
 CUDA version :
 cd cuda/
-nvcc -std=c++11 -O1 -o bscuda bitonic_sort_cuda.cu -Xcompiler -lrt -lm
-./bscuda 2048
+nvcc -std=c++11 -O1 -o bscu bitonic_sort_cuda.cu -Xcompiler -lrt -lm
+./bscu 2048
 
 OpenCL :
 cd opencl
-g++ -std=c++11 bitonic_sort_opencl.cpp -o bsopencl -I/usr/local/cuda/include/ -lOpenCL
-./bsopencl 2048
+g++ -std=c++11 bitonic_sort_opencl.cpp -o bsocl -I/usr/local/cuda/include/ -lOpenCL
+./bsocl 2048
