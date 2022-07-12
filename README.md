@@ -1,6 +1,5 @@
-Project : Comparing CUDA and OpenCL for GPU-based applications
+Comparing CUDA and OpenCL for GPU-based applications
 
-Members:
 
         Aditya Upadhyaya (au2056@nyu.edu)
         Nancy Nigam (nn2163@nyu.edu)
